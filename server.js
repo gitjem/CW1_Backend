@@ -10,21 +10,21 @@ const port = 3000;
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../CW1_Full_Stack_Development')));
 
-app.use(function(req, res, next){
-    var filePath = path.join(__dirname, "static", req.url);
-    fs.stat(filePath, function(err, fileInfo){
-        if(err){
-            next();
-            return;
-        }
+// app.use(function(req, res, next){
+//     var filePath = path.join(__dirname, "static", req.url);
+//     fs.stat(filePath, function(err, fileInfo){
+//         if(err){
+//             next();
+//             return;
+//         }
 
-        if (fileInfo.isFile()){
-            res.sendFile(filePath);
-        } else {
-            next();
-        }
-    });
-});
+//         if (fileInfo.isFile()){
+//             res.sendFile(filePath);
+//         } else {
+//             next();
+//         }
+//     });
+// });
 
 // MongoDB connection
 require('dotenv').config(); // load mongodb url from .env
@@ -52,6 +52,15 @@ async function startServer() {
 // Routes 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../CW1_Full_Stack_Development/frontend/index.html'));
+});
+
+app.get('/lessons', async (req, res) => {
+  try {
+    const allLessons = await db.collection('lessons').find({}).toArray();
+    res.json(allLessons);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch lessons' });
+  }
 });
 
 
@@ -85,6 +94,39 @@ app.get('/search', async (req, res) => {
   } catch (error) {
     console.error('Error during search:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/order', async (req, res) => {
+  try {
+    const { firstName, lastName, phone, cartItems } = req.body;
+
+    if (!firstName || !lastName || !phone || !cartItems) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    // Save order in database
+    await db.collection('orders').insertOne({
+      firstName,
+      lastName,
+      phone,
+      cartItems,     
+      createdAt: new Date()
+    });
+
+    // Reduce spaces per lesson based on qty
+    for (let item of cartItems) {
+      await db.collection('lessons').updateOne(
+        { id: item.id },
+        { $inc: { spaces: -item.qty } }
+      );
+    }
+
+    res.json({ message: "Order submitted successfully" });
+
+  } catch (err) {
+    console.error("Order error:", err);
+    res.status(500).json({ error: "Failed to process order" });
   }
 });
 
