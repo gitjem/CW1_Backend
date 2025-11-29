@@ -8,6 +8,13 @@ const port = 3000;
 
 // Middleware
 app.use(express.json());
+
+// Logger Middleware
+app.use(function (request, response, next) {
+    console.log("In comes a " + request.method + " to " + request.url);
+    next();
+});
+
 app.use(express.static(path.join(__dirname, '../CW1_Full_Stack_Development')));
 
 // app.use(function(req, res, next){
