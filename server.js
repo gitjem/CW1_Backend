@@ -17,21 +17,24 @@ app.use(function (request, response, next) {
 
 app.use(express.static(path.join(__dirname, '../CW1_Full_Stack_Development')));
 
-// app.use(function(req, res, next){
-//     var filePath = path.join(__dirname, "static", req.url);
-//     fs.stat(filePath, function(err, fileInfo){
-//         if(err){
-//             next();
-//             return;
-//         }
+// Static middleware for images
+app.use(function (req, res, next) {
+    if (!req.url.startsWith("/images/")) {
+        next();
+        return;
+    }
 
-//         if (fileInfo.isFile()){
-//             res.sendFile(filePath);
-//         } else {
-//             next();
-//         }
-//     });
-// });
+    const fileName = req.url.replace("/images/", ""); 
+    const filePath = path.join(__dirname, "static", fileName);
+
+    fs.stat(filePath, function (err, fileInfo) {
+        if (err || !fileInfo.isFile()) {
+            res.status(404).send("Image file not found!");
+            return;
+        }
+        res.sendFile(filePath);
+    });
+});
 
 // MongoDB connection
 require('dotenv').config(); // load mongodb url from .env
