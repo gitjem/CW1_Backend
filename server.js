@@ -9,15 +9,16 @@ const port = 3000;
 // Middleware
 app.use(express.json());
 
-// Logger Middleware
+// Logger Middleware - to track all requests to the server
 app.use(function (request, response, next) {
     console.log("In comes a " + request.method + " to " + request.url);
     next();
 });
 
+// Static folder for frontend files
 app.use(express.static(path.join(__dirname, '../CW1_Full_Stack_Development')));
 
-// Static middleware for images
+// Static middleware for lesson images
 app.use(function (req, res, next) {
     if (!req.url.startsWith("/images/")) {
         next();
@@ -37,7 +38,7 @@ app.use(function (req, res, next) {
 });
 
 // MongoDB connection
-require('dotenv').config(); // load mongodb url from .env
+require('dotenv').config(); // load mongodb url from .env file
 const url = process.env.MONGO_URL;
 
 const client = new MongoClient(url);
@@ -64,6 +65,7 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../CW1_Full_Stack_Development/frontend/index.html'));
 });
 
+// Get all lessons from mongodb
 app.get('/lessons', async (req, res) => {
   try {
     const allLessons = await db.collection('lessons').find({}).toArray();
@@ -73,7 +75,7 @@ app.get('/lessons', async (req, res) => {
   }
 });
 
-
+// Search results from mongodb based on query 
 app.get('/search', async (req, res) => {
   try {
     const query = req.query.query?.toLowerCase() || '';
@@ -84,6 +86,7 @@ app.get('/search', async (req, res) => {
       return res.json(allLessons);
     }
 
+    // Checks if query is numeric
     const numericQuery = Number(query);
     const isNumeric = !isNaN(numericQuery);
 
@@ -107,6 +110,7 @@ app.get('/search', async (req, res) => {
   }
 });
 
+// POST order - stores in orders collection
 app.post('/order', async (req, res) => {
   try {
     const { firstName, lastName, phone, cartItems } = req.body;
@@ -140,11 +144,13 @@ app.post('/order', async (req, res) => {
   }
 });
 
+// PUT lessons - update lesson details based on id 
 app.put('/lessons/:id', async (req, res) => {
   try {
     const lessonId = parseInt(req.params.id);
     const updates = req.body;
 
+    // No updated fields in req body
     if (!updates || Object.keys(updates).length === 0) {
       return res.status(400).json({ error: "No fields provided to update" });
     }
@@ -154,7 +160,7 @@ app.put('/lessons/:id', async (req, res) => {
       { $set: updates }
     );
 
-    // no lesson matched with id
+    // No lesson matched by id
     if (result.matchedCount === 0) { 
       return res.status(404).json({ error: "Lesson not found" });
     }
