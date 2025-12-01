@@ -140,6 +140,34 @@ app.post('/order', async (req, res) => {
   }
 });
 
+app.put('/lessons/:id', async (req, res) => {
+  try {
+    const lessonId = parseInt(req.params.id);
+    const updates = req.body;
+
+    if (!updates || Object.keys(updates).length === 0) {
+      return res.status(400).json({ error: "No fields provided to update" });
+    }
+
+    const result = await db.collection('lessons').updateOne(
+      { id: lessonId },
+      { $set: updates }
+    );
+
+    // no lesson matched with id
+    if (result.matchedCount === 0) { 
+      return res.status(404).json({ error: "Lesson not found" });
+    }
+
+    res.json({ message: "Lesson updated successfully", updatedFields: updates });
+
+  } catch (error) {
+    console.error("Update error:", error);
+    res.status(500).json({ error: "Failed to update the lesson" });
+  }
+});
+
+
 // Connect and start server
 startServer();
 
