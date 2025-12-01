@@ -119,6 +119,11 @@ app.post('/order', async (req, res) => {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
+    // Checks if phone is in correct format
+    if (!/^\d{3}-\d{2}-\d{3}$/.test(phone)) {
+      return res.status(400).json({ error: "Invalid phone format. Expected format: 000-00-000" });
+    }
+
     // Save order in database
     await db.collection('orders').insertOne({
       firstName,
