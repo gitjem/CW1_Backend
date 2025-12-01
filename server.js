@@ -155,6 +155,15 @@ app.put('/lessons/:id', async (req, res) => {
       return res.status(400).json({ error: "No fields provided to update" });
     }
 
+    // Validation - spaces and price must be non-negative
+    if (updates.spaces !== undefined && updates.spaces < 0) {
+      return res.status(400).json({ error: "Spaces cannot be negative" });
+    }
+
+    if (updates.price !== undefined && updates.price < 0) {
+      return res.status(400).json({ error: "Price cannot be negative" });
+    }
+
     const result = await db.collection('lessons').updateOne(
       { id: lessonId },
       { $set: updates }
