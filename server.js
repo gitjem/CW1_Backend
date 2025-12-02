@@ -4,7 +4,10 @@ const path = require('path');
 const fs = require("fs");
 
 const app = express();
-const port = 3000;
+
+// Render sets its own port in process.env.PORT
+// App can run on render and locally
+const port = process.env.PORT || 3000;
 
 // Middleware
 app.use(express.json());
@@ -44,21 +47,20 @@ const url = process.env.MONGO_URL;
 const client = new MongoClient(url);
 let db;
 
-async function startServer() {
+async function ConnectMongoDB() {
   try {
     await client.connect();
     db = client.db('afterSchoolDB'); 
     console.log('Connected to MongoDB');
-
-    // Start the server
-    app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
-    });
   } catch (error) {
     console.error('Failed to connect to MongoDB:', error);
   }
 }
 
+// Start the server
+app.listen(port, () => {
+console.log(`Server running at http://localhost:${port}`);
+});
 
 // Routes 
 app.get('/', (req, res) => {
@@ -188,6 +190,6 @@ app.put('/lessons/:id', async (req, res) => {
 });
 
 
-// Connect and start server
-startServer();
+// Connect to Mongodb
+ConnectMongoDB();
 
