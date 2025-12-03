@@ -2,12 +2,16 @@ const express = require('express');
 const { MongoClient } = require('mongodb');
 const path = require('path');
 const fs = require("fs");
+const cors = require("cors");
+require('dotenv').config();
 
 const app = express();
-
 // Render sets its own port in process.env.PORT
 // App can run on render and locally
 const port = process.env.PORT || 3000;
+
+// CORS - required for GitHub Pages to Render
+app.use(cors());
 
 // Middleware
 app.use(express.json());
@@ -18,8 +22,10 @@ app.use(function (request, response, next) {
     next();
 });
 
-// Static folder for frontend files
-app.use(express.static(path.join(__dirname, '../CW1_Full_Stack_Development')));
+// Health check
+app.get("/health", (req, res) => {
+  res.status(200).send("OK");
+});
 
 // Static middleware for lesson images
 app.use(function (req, res, next) {
@@ -41,9 +47,7 @@ app.use(function (req, res, next) {
 });
 
 // MongoDB connection
-require('dotenv').config(); // load mongodb url from .env file
-const url = process.env.MONGO_URL;
-
+const url = process.env.MONGO_URL; // load mongodb url from .env file
 const client = new MongoClient(url);
 let db;
 
@@ -57,16 +61,7 @@ async function ConnectMongoDB() {
   }
 }
 
-// Start the server
-app.listen(port, () => {
-console.log(`Server running at http://localhost:${port}`);
-});
-
 // Routes 
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../CW1_Full_Stack_Development/frontend/index.html'));
-});
-
 // Get all lessons from mongodb
 app.get('/lessons', async (req, res) => {
   try {
@@ -189,7 +184,16 @@ app.put('/lessons/:id', async (req, res) => {
   }
 });
 
+// Start Server
+async function StartServer() {
+  try {
+    await ConnectMongoDB();
+    app.listen(port, () => {
+      console.log("Server running on port " + port);
+    });
+  } catch (err) {
+    console.error("Startup error:", err);
+  }
+}
 
-// Connect to Mongodb
-ConnectMongoDB();
-
+StartServer();
