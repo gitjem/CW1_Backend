@@ -13,6 +13,9 @@ const port = process.env.PORT || 3000;
 // CORS - required for GitHub Pages to Render
 app.use(cors());
 
+// Serve CSS 
+app.use('/css', express.static(path.join(__dirname, '../CW1_Full_Stack_Development')));
+
 // Middleware
 app.use(express.json());
 
@@ -48,7 +51,9 @@ app.use(function (req, res, next) {
 
 // MongoDB connection
 const url = process.env.MONGO_URL; // load mongodb url from .env file
-const client = new MongoClient(url);
+const client = new MongoClient(url, {
+  serverApi: { version: "1", strict: true, deprecationErrors: true }
+});
 let db;
 
 async function ConnectMongoDB() {
@@ -62,6 +67,10 @@ async function ConnectMongoDB() {
 }
 
 // Routes 
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../CW1_Full_Stack_Development/index.html'));
+});
+
 // Get all lessons from mongodb
 app.get('/lessons', async (req, res) => {
   try {
